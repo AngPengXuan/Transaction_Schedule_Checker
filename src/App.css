@@ -1,0 +1,549 @@
+.app {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.app-header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------------ tabs */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+a.tab:hover {
+  color: var(--text);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab.soon {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.soon-tag {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.4rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0.9rem 0 0;
+  font-size: 0.95rem;
+}
+
+code,
+.mono {
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+}
+
+/* ------------------------------------------------------------- controls */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.control-group label,
+.schedule-input label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.control-group select.wide {
+  width: 430px;
+  max-width: 100%;
+}
+
+.actions {
+  flex-direction: row;
+}
+
+.schedule-input {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.schedule-input textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.field-hint {
+  flex: 1 1 100%;
+  margin: -0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.field-hint code {
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  border-radius: 3px;
+  padding: 0.05em 0.3em;
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.errors {
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+}
+
+.errors p {
+  margin: 0.25rem 0;
+}
+
+/* --------------------------------------------------------------- layout */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.side {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem 1rem;
+}
+
+@media (max-width: 860px) {
+  .side {
+    position: static;
+    max-height: none;
+  }
+}
+
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-head {
+  margin: 0 0 0.6rem;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.sub-head {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.side-hint,
+.note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0;
+}
+
+.note {
+  font-style: italic;
+}
+
+/* -------------------------------------------------------- schedule grid */
+
+.schedule-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.schedule-grid th {
+  font-weight: 700;
+  text-align: left;
+  padding: 0.2rem 0.4rem;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.schedule-grid th.aborted {
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+.txn-status {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.schedule-grid td {
+  padding: 0.12rem 0.4rem;
+  height: 1.4rem;
+}
+
+.schedule-grid .step {
+  color: var(--text-muted);
+  width: 1.8rem;
+  font-size: 0.75rem;
+}
+
+.schedule-grid tr {
+  transition: background-color 0.15s ease;
+}
+
+.schedule-grid tr.lit {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.schedule-grid tr.lit td.op {
+  font-weight: 700;
+}
+
+.op-C {
+  color: var(--focus-ok);
+}
+
+.op-A {
+  color: var(--danger);
+}
+
+/* ---------------------------------------------------------------- cards */
+
+.chains {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.chain .section-head {
+  margin-bottom: 0.4rem;
+}
+
+/* Three cards with a ⊂ between neighbours: each class sits inside the next. */
+.chain-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.subset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.35rem;
+  color: var(--text-muted);
+  cursor: help;
+}
+
+.subset-sym {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.subset-text {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px) {
+  .chain-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .subset {
+    flex-direction: row;
+    gap: 0.4rem;
+    padding: 0.2rem 0;
+  }
+
+  .subset-text::after {
+    content: ' ↓';
+  }
+}
+
+.card-implied {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--focus-ok);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem 0.75rem;
+}
+
+.card.yes {
+  border-left-color: var(--focus-ok);
+}
+
+.card.no {
+  border-left-color: var(--danger);
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.card-name {
+  font-weight: 700;
+}
+
+.badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.card.yes .badge {
+  color: var(--focus-ok);
+}
+
+.card.no .badge {
+  color: var(--danger);
+}
+
+.card-rule {
+  margin: 0.15rem 0 0.4rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.card-summary,
+.card-extra {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.card-extra {
+  margin-top: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.violations {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.violations li,
+.edge-rows li {
+  cursor: default;
+  border-radius: 4px;
+}
+
+.violations li:hover,
+.edge-rows li:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* --------------------------------------------------------------- panels */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.panel-text {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.graph-with-list {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 700px) {
+  .graph-with-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.edge-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.edge-rows li {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, auto) minmax(0, 1fr);
+  gap: 0.6rem;
+  padding: 0.2rem 0.3rem;
+}
+
+.edge-rows li + li {
+  border-top: 1px dashed var(--border);
+}
+
+.arc {
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.edge-rows em {
+  color: var(--text-muted);
+}
+
+.grid-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.graph-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.graph-grid.single {
+  grid-template-columns: minmax(0, 360px);
+}
+
+.graph-card {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.6rem 0.6rem;
+}
+
+.graph-card.acyclic {
+  border-color: var(--focus-ok);
+  background: color-mix(in srgb, var(--focus-ok) 6%, transparent);
+}
+
+.graph-picks {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  color: var(--rule-choice);
+  text-align: center;
+}
+
+.graph-verdict {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.graph-verdict.yes {
+  color: var(--focus-ok);
+}
+
+.graph-verdict.no {
+  color: var(--danger);
+}
+
+.show-all {
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .app {
+    padding: 1.25rem 1rem 2rem;
+  }
+}

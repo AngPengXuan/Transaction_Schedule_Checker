@@ -1,0 +1,82 @@
+/* ----------------------------------------------------------- region map */
+
+.region-map {
+  margin: 1rem 0 0;
+}
+
+.region-map figcaption {
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+/* Serializability across, recoverability down, as in the lecture diagram. */
+.region-grid {
+  display: grid;
+  grid-template-columns: auto repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  font-size: 0.72rem;
+}
+
+.region-row {
+  display: contents;
+}
+
+.region-col,
+.region-rowhead {
+  color: var(--text-muted);
+  font-weight: 600;
+  align-self: end;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.region-rowhead {
+  align-self: center;
+  text-align: right;
+  padding-right: 0.3rem;
+}
+
+.region {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 2.1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.region.here {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+button.region-pick {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.72rem;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-weight: 600;
+}
+
+.region.here button.region-pick {
+  color: var(--accent);
+}
+
+.region.impossible {
+  color: var(--text-muted);
+  opacity: 0.45;
+  border-style: dashed;
+  cursor: help;
+}
+
+.region-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}

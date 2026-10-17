@@ -1,0 +1,39 @@
+import type { ComponentType } from 'react';
+import { ClassicPage } from './classic/ClassicPage';
+
+/**
+ * Every page of the app, in tab order. A page without a component is listed
+ * as coming soon. `hash` is its route: '' for the root, so `#/` and no hash at
+ * all both open Classic.
+ */
+export interface PageEntry {
+  hash: string;
+  title: string;
+  blurb: string;
+  component?: ComponentType;
+}
+
+export const PAGES: PageEntry[] = [
+  {
+    hash: '',
+    title: 'Classic',
+    blurb: 'Serial, CSS, VSS, recoverable, ACA, strict',
+    component: ClassicPage,
+  },
+  {
+    hash: 'mvcc',
+    title: 'MVCC',
+    blurb: 'Multiversion schedules: MVSS, snapshot isolation',
+  },
+  {
+    hash: 'distributed',
+    title: 'Multi-database',
+    blurb: 'Local vs global serializability across databases',
+  },
+];
+
+/** The page for a location hash such as "#/mvcc"; unknown or unbuilt routes fall back to Classic. */
+export function pageForHash(hash: string): PageEntry {
+  const route = hash.replace(/^#\/?/, '');
+  return PAGES.find((p) => p.hash === route && p.component) ?? PAGES[0];
+}

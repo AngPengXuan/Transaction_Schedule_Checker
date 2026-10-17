@@ -1,0 +1,177 @@
+.graph svg {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  height: auto;
+}
+
+.graph.compact svg {
+  max-width: 230px;
+}
+
+/* ---------------------------------------------------------------- nodes */
+
+.node circle {
+  fill: var(--node-fill);
+  stroke: var(--node-stroke);
+  stroke-width: 1.8;
+}
+
+.node text {
+  fill: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  pointer-events: none;
+}
+
+/* T0 is not a real transaction: it only supplies the initial values. */
+.node.virtual circle {
+  stroke-dasharray: 4 3;
+  fill: var(--node-fill-internal);
+}
+
+.node.virtual text {
+  fill: var(--text-muted);
+}
+
+/* ---------------------------------------------------------------- edges */
+
+.edge-line {
+  fill: none;
+  stroke-width: 2;
+  transition: stroke-width 0.15s ease;
+}
+
+.edge-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12;
+  cursor: pointer;
+}
+
+.edge.hovered .edge-line {
+  stroke-width: 3.5;
+}
+
+.cycle-halo {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 9;
+  stroke-opacity: 0.22;
+  stroke-linecap: round;
+}
+
+.edge.rule-wr .edge-line,
+.edge.rule-a .edge-line,
+.legend-line.rule-wr,
+.legend-line.rule-a {
+  stroke: var(--rule-read);
+}
+
+.edge.rule-rw .edge-line,
+.legend-line.rule-rw {
+  stroke: var(--rule-rw);
+}
+
+.edge.rule-ww .edge-line,
+.edge.rule-b .edge-line,
+.legend-line.rule-ww,
+.legend-line.rule-b {
+  stroke: var(--rule-write);
+}
+
+.edge.rule-c-forced .edge-line,
+.legend-line.rule-c-forced {
+  stroke: var(--rule-forced);
+}
+
+.edge.rule-c .edge-line,
+.legend-line.rule-c {
+  stroke: var(--rule-choice);
+  stroke-dasharray: 6 3;
+}
+
+.arrow.rule-wr,
+.arrow.rule-a {
+  fill: var(--rule-read);
+}
+
+.arrow.rule-rw {
+  fill: var(--rule-rw);
+}
+
+.arrow.rule-ww,
+.arrow.rule-b {
+  fill: var(--rule-write);
+}
+
+.arrow.rule-c-forced {
+  fill: var(--rule-forced);
+}
+
+.arrow.rule-c {
+  fill: var(--rule-choice);
+}
+
+.rule-text.rule-wr,
+.rule-text.rule-a {
+  color: var(--rule-read);
+}
+
+.rule-text.rule-rw {
+  color: var(--rule-rw);
+}
+
+.rule-text.rule-ww,
+.rule-text.rule-b {
+  color: var(--rule-write);
+}
+
+.rule-text.rule-c-forced {
+  color: var(--rule-forced);
+}
+
+.rule-text.rule-c {
+  color: var(--rule-choice);
+}
+
+.edge-caption {
+  min-height: 3em;
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.edge-caption strong {
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+}
+
+/* --------------------------------------------------------------- legend */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend-line {
+  stroke-width: 2.5;
+}
+
+.legend-cycle {
+  stroke: var(--danger);
+  stroke-width: 8;
+  stroke-opacity: 0.25;
+}
