@@ -99,7 +99,7 @@ server.
 | File | |
 |---|---|
 | `src/App.tsx` | The shell: title, page tabs, hash routing |
-| `src/pages/registry.ts` | The list of pages; an entry with no component shows as "soon" |
+| `src/pages/registry.ts` | The list of pages. Pages not built yet are hidden unless `SHOW_UPCOMING` is on, which shows them as "soon" tabs |
 | `src/core/schedule.ts` | Parsing, and the committed projection |
 | `src/core/graph.ts` | Edge model, cycle finding, topological order |
 | `src/core/polygraph.ts` | View-serializability graph: rules (a), (b), (c), choice enumeration, and the check that tries every serial order. Takes reads-from as input, so MVCC can supply it from versioned reads. |

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { trackPageView } from './analytics';
-import { PAGES, pageForHash } from './pages/registry';
+import { pageForHash, TABS } from './pages/registry';
 import './App.css';
 
 /**
@@ -28,7 +28,7 @@ function App() {
       <header className="app-header">
         <h1>Schedule Checker</h1>
         <nav className="tabs" aria-label="Pages">
-          {PAGES.map((p) =>
+          {TABS.map((p) =>
             p.component ? (
               <a
                 key={p.hash}

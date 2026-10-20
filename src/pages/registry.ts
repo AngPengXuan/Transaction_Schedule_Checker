@@ -32,6 +32,15 @@ export const PAGES: PageEntry[] = [
   },
 ];
 
+/**
+ * Whether pages that are not built yet appear as greyed-out "soon" tabs.
+ * Off for now; turn on to show what is planned.
+ */
+export const SHOW_UPCOMING = false;
+
+/** The pages that get a tab. */
+export const TABS = PAGES.filter((p) => p.component || SHOW_UPCOMING);
+
 /** The page for a location hash such as "#/mvcc"; unknown or unbuilt routes fall back to Classic. */
 export function pageForHash(hash: string): PageEntry {
   const route = hash.replace(/^#\/?/, '');
