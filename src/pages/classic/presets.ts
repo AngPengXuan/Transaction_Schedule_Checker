@@ -52,4 +52,4 @@ export const EXTRA_PRESETS: Preset[] = [
 
 export const ALL_PRESETS = [...REGION_PRESETS, ...EXTRA_PRESETS];
 
-export const DEFAULT_PRESET = EXTRA_PRESETS[0];
+export const DEFAULT_PRESET = REGION_PRESETS.find((p) => p.id === 'serial')!;
