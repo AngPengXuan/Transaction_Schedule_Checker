@@ -346,14 +346,17 @@ export function ClassicPage() {
                     Every transaction, plus T0, which wrote the initial values, and Tf, which
                     reads every written object after the schedule ends.
                   </dd>
-                  <dt>Rules 1 &amp; 2:</dt>
-                  <dd>If Ti reads X from Tj, add Tj → Ti, so each final writer gets an arc to Tf.</dd>
-                  <dt>Rule 3:</dt>
+                  <dt>Edges:</dt>
                   <dd>
-                    If Ti reads X from Tj and Tk also writes X, add Tk → Tj <em>or</em> Ti → Tk.
-                    <ul>
-                      <li>If Tj is T0, only Ti → Tk.</li>
-                      <li>If Ti is Tf, only Tk → Tj.</li>
+                    <ul className="flush">
+                      <li>If Ti reads X from Tj, add Tj → Ti, so each final writer gets an arc to Tf.</li>
+                      <li>
+                        If Ti reads X from Tj and Tk also writes X, add Tk → Tj <em>or</em> Ti → Tk.
+                        <ul>
+                          <li>If Tj is T0, only Ti → Tk.</li>
+                          <li>If Ti is Tf, only Tk → Tj.</li>
+                        </ul>
+                      </li>
                     </ul>
                   </dd>
                 </dl>

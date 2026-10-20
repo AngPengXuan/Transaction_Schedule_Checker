@@ -492,6 +492,11 @@ button.ghost {
   padding-left: 1.1rem;
 }
 
+/* A list that starts on the label's line rather than below it. */
+.rule-list ul.flush {
+  margin-top: 0;
+}
+
 .panel-text {
   margin: 0 0 0.6rem;
   font-size: 0.85rem;

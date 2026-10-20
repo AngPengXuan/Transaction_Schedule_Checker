@@ -27,12 +27,11 @@ give the same verdicts and serial orders.
 
 - **Nodes:** every transaction, plus T0, which wrote the initial values, and
   **Tf**, which reads every written object after the schedule ends.
-- **Rules 1 & 2:** if Ti reads X from Tj, add Tj → Ti, so each final writer
-  gets an arc to Tf.
-- **Rule 3:** if Ti reads X from Tj and Tk also writes X, add Tk → Tj **or**
-  Ti → Tk.
-  - If Tj is T0, only Ti → Tk.
-  - If Ti is Tf, only Tk → Tj. This is where the final-write requirement comes in.
+- **Edges:**
+  - If Ti reads X from Tj, add Tj → Ti, so each final writer gets an arc to Tf.
+  - If Ti reads X from Tj and Tk also writes X, add Tk → Tj **or** Ti → Tk.
+    - If Tj is T0, only Ti → Tk.
+    - If Ti is Tf, only Tk → Tj. This is where the final-write requirement comes in.
 
 ### AY25/26 Sem 2
 
