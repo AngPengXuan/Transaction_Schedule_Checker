@@ -6,7 +6,7 @@ import { cycleText, orderText } from '../../core/format';
 import { addEdge, cycleArcs, findCycle, topoOrder } from '../../core/graph';
 import type { Edge, Graph } from '../../core/graph';
 import { latestWriteReadsFrom, viewGraph } from '../../core/polygraph';
-import type { ViewResult } from '../../core/polygraph';
+import type { ViewResult, ViewStyle } from '../../core/polygraph';
 import { committedProjection, opText, txnName } from '../../core/schedule';
 import type { Op, Schedule } from '../../core/schedule';
 import type { Verdict, Violation } from '../../core/verdict';
@@ -107,9 +107,9 @@ export function checkCss(s: Schedule): CssResult {
 // ======================================================= view serializable
 
 /** VSS on the committed projection, where each read sees the latest earlier write. */
-export function checkVss(s: Schedule): ViewResult {
+export function checkVss(s: Schedule, style: ViewStyle = 'lecture'): ViewResult {
   const { ops, txns } = committedProjection(s);
-  return viewGraph(ops, txns, latestWriteReadsFrom(ops));
+  return viewGraph(ops, txns, latestWriteReadsFrom(ops), { finalWrites: true, style });
 }
 
 // ========================================================== recoverability
@@ -243,7 +243,7 @@ export interface Analysis {
   notes: string[];
 }
 
-export function analyse(s: Schedule): Analysis {
+export function analyse(s: Schedule, style: ViewStyle = 'lecture'): Analysis {
   const notes: string[] = [];
   const aborted = s.txns.filter((t) => s.status[t] === 'aborted');
   const active = s.txns.filter((t) => s.status[t] === 'active');
@@ -262,7 +262,7 @@ export function analyse(s: Schedule): Analysis {
   return {
     serial: checkSerial(s),
     css: checkCss(s),
-    vss: checkVss(s),
+    vss: checkVss(s, style),
     recoverable: checkRecoverable(s),
     aca: checkAca(s),
     strict: checkStrict(s),

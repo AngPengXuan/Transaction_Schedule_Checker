@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react';
 import type { Edge, EdgeRule } from '../graph';
 import { cycleArcs } from '../graph';
-import { T0, txnName } from '../schedule';
+import { isVirtual, txnName } from '../schedule';
 import './GraphView.css';
 
 const RULE_LABEL: Record<EdgeRule, string> = {
@@ -21,6 +21,8 @@ interface Props {
   /** Reports the operations behind the edge under the pointer, or null when it leaves. */
   onHover?: (ops: number[] | null) => void;
   compact?: boolean;
+  /** Overrides for the rule names shown on hover, e.g. the lecture's wording. */
+  labels?: Partial<Record<EdgeRule, string>>;
 }
 
 const NODE_R = 19;
@@ -33,7 +35,7 @@ interface Placed {
 }
 
 /**
- * Transactions on a circle, T0 (when present) at the top. Several edges
+ * Transactions on a circle, T0 (when present) at the top and Tf (when present) last. Several edges
  * between one pair -- opposite directions, or different rules -- bow apart
  * so each keeps its own colour.
  */
@@ -91,7 +93,7 @@ function layout(nodes: number[], edges: Edge[], cycle: number[] | null) {
   return { size: center * 2, pos, placed };
 }
 
-export function GraphView({ nodes, edges, cycle, onHover, compact }: Props) {
+export function GraphView({ nodes, edges, cycle, onHover, compact, labels }: Props) {
   const id = useId().replace(/:/g, '');
   const { size, pos, placed } = useMemo(() => layout(nodes, edges, cycle), [nodes, edges, cycle]);
   const [hovered, setHovered] = useState<Edge | null>(null);
@@ -143,7 +145,7 @@ export function GraphView({ nodes, edges, cycle, onHover, compact }: Props) {
         {nodes.map((n) => {
           const { x, y } = pos.get(n)!;
           return (
-            <g key={n} className={`node ${n === T0 ? 'virtual' : ''}`} transform={`translate(${x},${y})`}>
+            <g key={n} className={`node ${isVirtual(n) ? 'virtual' : ''}`} transform={`translate(${x},${y})`}>
               <circle r={NODE_R} />
               <text textAnchor="middle" dominantBaseline="central">
                 {txnName(n)}
@@ -157,7 +159,8 @@ export function GraphView({ nodes, edges, cycle, onHover, compact }: Props) {
           {hovered ? (
             <>
               <strong className={`rule-text rule-${hovered.rule}`}>
-                {txnName(hovered.from)} → {txnName(hovered.to)} · {RULE_LABEL[hovered.rule]}
+                {txnName(hovered.from)} → {txnName(hovered.to)} ·{' '}
+                {labels?.[hovered.rule] ?? RULE_LABEL[hovered.rule]}
               </strong>
               <br />
               {hovered.reasons.join('; ')}.
@@ -173,7 +176,13 @@ export function GraphView({ nodes, edges, cycle, onHover, compact }: Props) {
   );
 }
 
-export function Legend({ rules }: { rules: EdgeRule[] }) {
+export function Legend({
+  rules,
+  labels,
+}: {
+  rules: EdgeRule[];
+  labels?: Partial<Record<EdgeRule, string>>;
+}) {
   return (
     <div className="legend">
       {rules.map((rule) => (
@@ -181,7 +190,7 @@ export function Legend({ rules }: { rules: EdgeRule[] }) {
           <svg width="28" height="10" aria-hidden="true">
             <line x1="1" y1="5" x2="27" y2="5" className={`legend-line rule-${rule}`} />
           </svg>
-          {RULE_LABEL[rule]}
+          {labels?.[rule] ?? RULE_LABEL[rule]}
         </span>
       ))}
       <span className="legend-item">

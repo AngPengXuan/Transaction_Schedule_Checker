@@ -1,9 +1,9 @@
 import type { Edge } from './graph';
-import { T0, txnName } from './schedule';
+import { isVirtual, txnName } from './schedule';
 
-/** "T2 → T1 → T3", leaving out T0, which is never part of a serial order. */
+/** "T2 → T1 → T3", leaving out T0 and Tf, which are never part of a serial order. */
 export function orderText(order: number[]): string {
-  return order.filter((t) => t !== T0).map(txnName).join(' → ');
+  return order.filter((t) => !isVirtual(t)).map(txnName).join(' → ');
 }
 
 /** "T1 → T2 → T1": the cycle as found, closing node included. */

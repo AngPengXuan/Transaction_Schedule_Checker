@@ -27,12 +27,23 @@ export interface Schedule {
 /** T0 is the virtual transaction that wrote every object's initial value. */
 export const T0 = 0;
 
-export function opText(op: Op): string {
-  return op.obj === null ? `${op.kind}${op.txn}` : `${op.kind}${op.txn}(${op.obj})`;
+/**
+ * Tf is the virtual transaction of the lecture's polygraph that reads every
+ * written object after the schedule ends. Never a parsed id (those are >= 1).
+ */
+export const TF = -1;
+
+export function isVirtual(t: number): boolean {
+  return t === T0 || t === TF;
 }
 
 export function txnName(t: number): string {
-  return `T${t}`;
+  return t === TF ? 'Tf' : `T${t}`;
+}
+
+export function opText(op: Op): string {
+  const who = op.txn === TF ? 'f' : String(op.txn);
+  return op.obj === null ? `${op.kind}${who}` : `${op.kind}${who}(${op.obj})`;
 }
 
 const TOKEN = /^([RWCA])\s*(\d+)\s*(?:[([]\s*([A-Za-z_][A-Za-z0-9_]*)\s*[)\]])?$/i;

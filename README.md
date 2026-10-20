@@ -20,6 +20,25 @@ Companion to the
 
 ## The view serializability graph
 
+The graph can be drawn two ways, chosen by a toggle above the VSS graphs. Both
+give the same verdicts and serial orders.
+
+### AY26/27 Sem 1 (default), as in the current lecture slides
+
+- **Nodes:** every transaction, plus T0, which wrote the initial values, and
+  **Tf**, which reads every written object after the schedule ends.
+- **Rules 1 & 2:** if Ti reads X from Tj, add Tj → Ti, so each final writer
+  gets an arc to Tf.
+- **Rule 3:** if Ti reads X from Tj and Tk also writes X, add Tk → Tj **or**
+  Ti → Tk.
+  - If Tj is T0, only Ti → Tk.
+  - If Ti is Tf, only Tk → Tj. This is where the final-write requirement comes in.
+
+### AY25/26 Sem 2
+
+No Tf node. Rule (b) states the final-write requirement directly: every other
+writer of O, including T0, comes before the final writer.
+
 The graph has a virtual transaction **T0**, which wrote every object's initial
 value. Edges come from three rules:
 

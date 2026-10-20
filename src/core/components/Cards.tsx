@@ -67,13 +67,23 @@ export function EdgeRows({ edges, onHover }: { edges: Edge[]; onHover: OnHover }
   );
 }
 
-/** One rule (c) either/or choice, and whether an existing edge already settles it. */
-export function ChoiceRow({ choice, onHover }: { choice: Choice; onHover: OnHover }) {
+/** One either/or choice, and whether an existing edge already settles it. */
+export function ChoiceRow({
+  choice,
+  onHover,
+  prefix,
+}: {
+  choice: Choice;
+  onHover: OnHover;
+  /** Shown before the choice number: "c" for rule (c), "#" for the lecture's rule 3. */
+  prefix: string;
+}) {
   const [x, y] = choice.options;
   return (
     <li onMouseEnter={() => onHover(x.ops)} onMouseLeave={() => onHover(null)}>
       <span className="arc">
-        c{choice.id}: <span className="rule-text rule-c">{arcText(x)}</span> or{' '}
+        {prefix}
+        {choice.id}: <span className="rule-text rule-c">{arcText(x)}</span> or{' '}
         <span className="rule-text rule-c">{arcText(y)}</span>
       </span>
       <span>

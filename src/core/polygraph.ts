@@ -7,7 +7,7 @@
 import { cycleText, orderText } from './format';
 import { addEdge, findCycle, hasArc, topoOrder } from './graph';
 import type { Edge, Graph } from './graph';
-import { opText, T0, txnName } from './schedule';
+import { opText, T0, TF, txnName } from './schedule';
 import type { Op } from './schedule';
 import type { Verdict } from './verdict';
 
@@ -74,12 +74,23 @@ function arcKey(e: { from: number; to: number }): string {
   return `${e.from}>${e.to}`;
 }
 
+/**
+ * How the graph is drawn. Both give the same verdicts and serial orders.
+ * - 'lecture' (the slides): T0 and Tf nodes; reads-from arcs, with Tf reading
+ *   every written object's final value; rule 3 with its two special cases.
+ *   The final-write requirement enters through rule 3 with Tf as the reader.
+ * - 'notes': T0 only, rules (a), (b), (c); rule (b) states the final-write
+ *   requirement directly instead of going through Tf.
+ */
+export type ViewStyle = 'lecture' | 'notes';
+
 export interface ViewOptions {
   /**
-   * Rule (b): the same final writer for every object. On for monoversion view
+   * The same final writer for every object. On for monoversion view
    * serializability; a multiversion definition may compare reads-from alone.
    */
   finalWrites: boolean;
+  style: ViewStyle;
 }
 
 /**
@@ -95,32 +106,59 @@ export function viewGraph(
   ops: Op[],
   txns: number[],
   rf: ReadsFrom[],
-  { finalWrites }: ViewOptions = { finalWrites: true },
+  { finalWrites, style }: ViewOptions = { finalWrites: true, style: 'lecture' },
 ): ViewResult {
-  const nodes = [T0, ...txns];
+  const lecture = style === 'lecture';
+  // The lecture's Tf reads each written object's final value, which turns the
+  // final-write requirement into ordinary reads for rules 1 and 3.
+  const withTf = lecture && finalWrites;
+  const nodes = withTf ? [T0, ...txns, TF] : [T0, ...txns];
+  // Names of the two self-loop cases, in each source's lettering.
+  const sameAsSource = lecture ? 'Tk = Tj' : 'Ti = Tk';
+  const sameAsReader = lecture ? 'Tk = Ti' : 'Ti = Tj';
   const writersOf = (obj: string) =>
     [...new Set(ops.filter((o) => o.kind === 'W' && o.obj === obj).map((o) => o.txn))];
   const writesBy = (t: number, obj: string) =>
     ops.filter((o) => o.kind === 'W' && o.obj === obj && o.txn === t).map((o) => o.index);
   const source = (r: ReadsFrom) => (r.write ? opText(r.write) : 'the initial value');
 
+  const reads: ReadsFrom[] = [...rf];
+  if (withTf) {
+    const objects = [...new Set(ops.filter((o) => o.kind === 'W').map((o) => o.obj!))].sort();
+    for (const obj of objects) {
+      const final = ops.filter((o) => o.kind === 'W' && o.obj === obj).pop()!;
+      reads.push({
+        reader: TF,
+        // Tf's read happens after the schedule; it has no step to highlight.
+        read: { index: -1, kind: 'R', txn: TF, obj },
+        writer: final.txn,
+        write: final,
+      });
+    }
+  }
+  const stepOps = (...indexes: number[]) => indexes.filter((i) => i >= 0);
+
   const base: Edge[] = [];
 
-  // (a) reads-from
-  for (const r of rf) {
+  // (a) reads-from -- the lecture's rules 1 and 2, Tf's final reads included
+  for (const r of reads) {
     if (r.writer === r.reader) continue;
     addEdge(base, {
       from: r.writer,
       to: r.reader,
       rule: 'a',
-      ops: r.write ? [r.write.index, r.read.index] : [r.read.index],
-      reasons: [`${T(r.reader)} reads ${r.read.obj} from ${T(r.writer)} (${source(r)} → ${opText(r.read)})`],
+      ops: stepOps(...(r.write ? [r.write.index] : []), r.read.index),
+      reasons: [
+        r.reader === TF
+          ? `Tf reads the final value of ${r.read.obj}, written by ${T(r.writer)} (${source(r)})`
+          : `${T(r.reader)} reads ${r.read.obj} from ${T(r.writer)} (${source(r)} → ${opText(r.read)})`,
+      ],
     });
   }
 
   // (b) final writes
   const objects = [...new Set(ops.filter((o) => o.obj !== null).map((o) => o.obj!))].sort();
-  for (const obj of finalWrites ? objects : []) {
+  for (const obj of finalWrites && !withTf ? objects : []) {
     const writes = ops.filter((o) => o.kind === 'W' && o.obj === obj);
     if (writes.length === 0) continue;
     const final = writes[writes.length - 1];
@@ -141,7 +179,7 @@ export function viewGraph(
 
   // (c) a third transaction must not slip between a read and its source
   const choices: Choice[] = [];
-  for (const r of rf) {
+  for (const r of reads) {
     if (r.writer === r.reader) continue;
     const obj = r.read.obj!;
     for (const i of writersOf(obj)) {
@@ -161,7 +199,7 @@ export function viewGraph(
             reasons: [
               `${T(r.reader)} reads ${obj} from ${T(r.writer)} (${source(r)} → ${opText(r.read)}), ` +
                 `and ${T(i)} updates ${obj} again (${opText(later)}, step ${later.index + 1}); with ` +
-                `Ti = Tk, ${T(i)} → ${T(r.writer)} is impossible, so ${T(r.reader)} → ${T(r.writer)}`,
+                `${sameAsSource}, ${T(i)} → ${T(r.writer)} is impossible, so ${T(r.reader)} → ${T(r.writer)}`,
             ],
           });
         }
@@ -183,15 +221,29 @@ export function viewGraph(
             ops: [ownEarlier.index, ...(r.write ? [r.write.index] : []), r.read.index],
             reasons: [
               `${T(r.reader)} reads ${obj} from ${T(r.writer)} (${source(r)} → ${opText(r.read)}) ` +
-                `but already wrote ${obj} itself (${opText(ownEarlier)}); ${T(r.reader)} → ` +
-                `${T(r.reader)} is impossible, so ${T(r.reader)} → ${T(r.writer)}`,
+                `but already wrote ${obj} itself (${opText(ownEarlier)}); with ${sameAsReader}, ` +
+                `${T(r.reader)} → ${T(r.reader)} is impossible, so ${T(r.reader)} → ${T(r.writer)}`,
             ],
           });
         }
         continue;
       }
-      const opsBehind = [...(r.write ? [r.write.index] : []), r.read.index, ...writesBy(i, obj)];
-      const why = `${T(r.reader)} reads ${obj} from ${T(r.writer)} (${source(r)} → ${opText(r.read)}) and ${T(i)} updates ${obj}`;
+      const opsBehind = stepOps(...(r.write ? [r.write.index] : []), r.read.index, ...writesBy(i, obj));
+      const why =
+        r.reader === TF
+          ? `Tf reads the final value of ${obj} from ${T(r.writer)} (${source(r)}) and ${T(i)} also writes ${obj}`
+          : `${T(r.reader)} reads ${obj} from ${T(r.writer)} (${source(r)} → ${opText(r.read)}) and ${T(i)} updates ${obj}`;
+      if (r.reader === TF) {
+        // The slides' second special case: nothing can come after Tf.
+        addEdge(base, {
+          from: i,
+          to: r.writer,
+          rule: 'c-forced',
+          ops: opsBehind,
+          reasons: [`${why}; Tf → ${T(i)} is impossible, so ${T(i)} → ${T(r.writer)}`],
+        });
+        continue;
+      }
       if (r.writer === T0) {
         addEdge(base, {
           from: r.reader,

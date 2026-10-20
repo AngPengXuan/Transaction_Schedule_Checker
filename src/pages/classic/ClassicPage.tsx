@@ -4,7 +4,7 @@ import { GraphView, Legend } from '../../core/components/GraphView';
 import { ScheduleGrid } from '../../core/components/ScheduleGrid';
 import { arcText, orderText } from '../../core/format';
 import type { EdgeRule } from '../../core/graph';
-import type { Choice, ViewGraph } from '../../core/polygraph';
+import type { Choice, ViewGraph, ViewStyle } from '../../core/polygraph';
 import { parseSchedule, txnName } from '../../core/schedule';
 import { strongerHolding } from '../../core/verdict';
 import { analyse } from './analysis';
@@ -37,9 +37,51 @@ function randomSchedule(): string {
   return out.join(' ');
 }
 
-function picksText(g: ViewGraph, open: Choice[]): string {
+function picksText(g: ViewGraph, open: Choice[], prefix: string): string {
   if (open.length === 0) return 'No open choices';
-  return open.map((c, k) => `c${c.id}: ${arcText(c.options[g.picks[k]])}`).join(' · ');
+  return open.map((c, k) => `${prefix}${c.id}: ${arcText(c.options[g.picks[k]])}`).join(' · ');
+}
+
+/** Wording for each drawing style; the verdicts are the same either way. */
+const STYLES: Record<
+  ViewStyle,
+  {
+    label: string;
+    /** What the semester's material used, shown on hover. */
+    method: string;
+    prefix: string;
+    labels: Partial<Record<EdgeRule, string>>;
+    rules: EdgeRule[];
+  }
+> = {
+  lecture: {
+    label: 'AY26/27 Sem 1',
+    method: 'T0 + Tf nodes, reads-from arcs, rule 3 with special cases',
+    prefix: '#',
+    labels: {
+      a: 'rules 1–2: reads from (Tf reads final values)',
+      'c-forced': 'rule 3, special case (forced)',
+      c: 'rule 3, chosen',
+    },
+    rules: ['a', 'c-forced', 'c'],
+  },
+  notes: {
+    label: 'AY25/26 Sem 2',
+    method: 'T0 only, rules (a), (b), (c)',
+    prefix: 'c',
+    labels: {},
+    rules: ['a', 'b', 'c-forced', 'c'],
+  },
+};
+
+const STYLE_KEY = 'vss-style';
+
+function savedStyle(): ViewStyle {
+  try {
+    return localStorage.getItem(STYLE_KEY) === 'notes' ? 'notes' : 'lecture';
+  } catch {
+    return 'lecture';
+  }
 }
 
 /** Monoversion schedules: serial, CSS, VSS, recoverable, ACA, strict. */
@@ -49,10 +91,25 @@ export function ClassicPage() {
   const [hoverOps, setHoverOps] = useState<number[] | null>(null);
   const [onlyAcyclic, setOnlyAcyclic] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [style, setStyle] = useState<ViewStyle>(savedStyle);
 
   const parsed = useMemo(() => parseSchedule(text), [text]);
   const schedule = parsed.schedule;
-  const analysis = useMemo(() => (schedule ? analyse(schedule) : null), [schedule]);
+  const analysis = useMemo(
+    () => (schedule ? analyse(schedule, style) : null),
+    [schedule, style],
+  );
+  const look = STYLES[style];
+
+  function chooseStyle(next: ViewStyle) {
+    setStyle(next);
+    setShowAll(false);
+    try {
+      localStorage.setItem(STYLE_KEY, next);
+    } catch {
+      // Remembering the choice is a convenience; without storage it just resets.
+    }
+  }
   const highlight = useMemo(() => new Set(hoverOps ?? []), [hoverOps]);
 
   function load(next: string, id = '') {
@@ -266,19 +323,68 @@ export function ClassicPage() {
             </section>
 
             <section className="panel">
-              <h2 className="section-head">View serializability — possible graphs</h2>
-              <p className="panel-text">
-                (a) Tj reads O from Ti ⇒ Ti → Tj. (b) Ti makes the final write on O ⇒ Tj → Ti for
-                every other Tj updating O. (c) Tj reads O from Tk and Ti updates O ⇒ Ti → Tk{' '}
-                <em>or</em> Tj → Ti. When Tk is T0, Ti → T0 is impossible, so (c) is forced.
+              <div className="panel-head">
+                <h2 className="section-head">View serializability — possible graphs</h2>
+                <div className="segmented" role="group" aria-label="Graph drawn as in">
+                  {(['lecture', 'notes'] as ViewStyle[]).map((s) => (
+                    <button
+                      key={s}
+                      className={s === style ? 'on' : ''}
+                      aria-pressed={s === style}
+                      title={STYLES[s].method}
+                      onClick={() => chooseStyle(s)}
+                    >
+                      {STYLES[s].label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {style === 'lecture' ? (
+                <dl className="rule-list">
+                  <dt>Nodes:</dt>
+                  <dd>
+                    Every transaction, plus T0, which wrote the initial values, and Tf, which
+                    reads every written object after the schedule ends.
+                  </dd>
+                  <dt>Rules 1 &amp; 2:</dt>
+                  <dd>If Ti reads X from Tj, add Tj → Ti, so each final writer gets an arc to Tf.</dd>
+                  <dt>Rule 3:</dt>
+                  <dd>
+                    If Ti reads X from Tj and Tk also writes X, add Tk → Tj <em>or</em> Ti → Tk.
+                    <ul>
+                      <li>If Tj is T0, only Ti → Tk.</li>
+                      <li>If Ti is Tf, only Tk → Tj.</li>
+                    </ul>
+                  </dd>
+                </dl>
+              ) : (
+                <dl className="rule-list">
+                  <dt>Nodes:</dt>
+                  <dd>Every transaction, plus T0, which wrote the initial values.</dd>
+                  <dt>(a)</dt>
+                  <dd>If Tj reads O from Ti, add Ti → Tj.</dd>
+                  <dt>(b)</dt>
+                  <dd>If Ti makes the final write on O, add Tj → Ti for every other Tj updating O.</dd>
+                  <dt>(c)</dt>
+                  <dd>
+                    If Tj reads O from Tk and Ti updates O, add Ti → Tk <em>or</em> Tj → Ti.
+                    <ul>
+                      <li>If Tk is T0, Ti → T0 is impossible, so only Tj → Ti.</li>
+                    </ul>
+                  </dd>
+                </dl>
+              )}
+              <p className="note">
+                Both drawings give the same verdict and serial orders; only the extra node and the
+                rule labels differ.
               </p>
-              <Legend rules={['a', 'b', 'c-forced', 'c']} />
+              <Legend rules={look.rules} labels={look.labels} />
 
               <h3 className="sub-head">Edges in every graph</h3>
               <EdgeRows edges={vss.base} onHover={setHoverOps} />
 
               <h3 className="sub-head">
-                Rule (c) choices — {vss.open.length} open, {vss.choices.length - vss.open.length}{' '}
+                {style === 'lecture' ? 'Rule 3' : 'Rule (c)'} choices — {vss.open.length} open, {vss.choices.length - vss.open.length}{' '}
                 already satisfied
               </h3>
               {vss.choices.length === 0 ? (
@@ -286,7 +392,7 @@ export function ClassicPage() {
               ) : (
                 <ul className="edge-rows">
                   {vss.choices.map((c) => (
-                    <ChoiceRow key={c.id} choice={c} onHover={setHoverOps} />
+                    <ChoiceRow key={c.id} choice={c} onHover={setHoverOps} prefix={look.prefix} />
                   ))}
                 </ul>
               )}
@@ -322,8 +428,9 @@ export function ClassicPage() {
                       cycle={g.cycle}
                       onHover={setHoverOps}
                       compact={vss.graphs.length > 1}
+                      labels={look.labels}
                     />
-                    <p className="graph-picks">{picksText(g, vss.open)}</p>
+                    <p className="graph-picks">{picksText(g, vss.open, look.prefix)}</p>
                     <p className={`graph-verdict ${g.cycle ? 'no' : 'yes'}`}>
                       {g.cycle
                         ? `✗ cycle ${g.cycle.map(txnName).join(' → ')}`

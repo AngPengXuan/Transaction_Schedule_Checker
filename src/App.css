@@ -429,6 +429,69 @@ button.ghost {
   padding: 0.85rem 1rem 1rem;
 }
 
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.panel-head .section-head {
+  margin: 0;
+}
+
+/* Two-way switch: which source the drawing follows. */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmented button {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: 0;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button.on {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+/* The graph's rules, one per line: label on the left, rule on the right. */
+.rule-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.3rem 0.8rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.rule-list dt {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rule-list dd {
+  margin: 0;
+}
+
+.rule-list ul {
+  margin: 0.15rem 0 0;
+  padding-left: 1.1rem;
+}
+
 .panel-text {
   margin: 0 0 0.6rem;
   font-size: 0.85rem;
