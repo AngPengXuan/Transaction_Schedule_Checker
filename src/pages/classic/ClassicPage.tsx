@@ -1,19 +1,18 @@
 import { useMemo, useState } from 'react';
-import { ChoiceRow, EdgeRows, PropertyCard, Subset } from '../../core/components/Cards';
+import { EdgeRows, PropertyCard, Subset } from '../../core/components/Cards';
 import { GraphView, Legend } from '../../core/components/GraphView';
 import { ScheduleGrid } from '../../core/components/ScheduleGrid';
-import { arcText, orderText } from '../../core/format';
+import { ViewGraphPanel } from '../../core/components/ViewGraphPanel';
+import { orderText } from '../../core/format';
 import type { EdgeRule } from '../../core/graph';
-import type { Choice, ViewGraph, ViewStyle } from '../../core/polygraph';
-import { parseSchedule, txnName } from '../../core/schedule';
+import { parseSchedule } from '../../core/schedule';
 import { strongerHolding } from '../../core/verdict';
+import { useViewStyle } from '../../core/viewStyle';
 import { analyse } from './analysis';
 import { ALL_PRESETS, DEFAULT_PRESET, EXTRA_PRESETS, REGION_PRESETS } from './presets';
 import type { RecoveryClass, SerialClass } from './presets';
 import { RegionMap } from './RegionMap';
 import './RegionMap.css';
-
-const GRAPHS_SHOWN = 12;
 
 function randomSchedule(): string {
   const n = 2 + Math.floor(Math.random() * 2);
@@ -37,61 +36,12 @@ function randomSchedule(): string {
   return out.join(' ');
 }
 
-function picksText(g: ViewGraph, open: Choice[], prefix: string): string {
-  if (open.length === 0) return 'No open choices';
-  return open.map((c, k) => `${prefix}${c.id}: ${arcText(c.options[g.picks[k]])}`).join(' · ');
-}
-
-/** Wording for each drawing style; the verdicts are the same either way. */
-const STYLES: Record<
-  ViewStyle,
-  {
-    label: string;
-    /** What the semester's material used, shown on hover. */
-    method: string;
-    prefix: string;
-    labels: Partial<Record<EdgeRule, string>>;
-    rules: EdgeRule[];
-  }
-> = {
-  lecture: {
-    label: 'AY26/27 Sem 1',
-    method: 'T0 + Tf nodes, reads-from arcs, rule 3 with special cases',
-    prefix: '#',
-    labels: {
-      a: 'rules 1–2: reads from (Tf reads final values)',
-      'c-forced': 'rule 3, special case (forced)',
-      c: 'rule 3, chosen',
-    },
-    rules: ['a', 'c-forced', 'c'],
-  },
-  notes: {
-    label: 'AY25/26 Sem 2',
-    method: 'T0 only, rules (a), (b), (c)',
-    prefix: 'c',
-    labels: {},
-    rules: ['a', 'b', 'c-forced', 'c'],
-  },
-};
-
-const STYLE_KEY = 'vss-style';
-
-function savedStyle(): ViewStyle {
-  try {
-    return localStorage.getItem(STYLE_KEY) === 'notes' ? 'notes' : 'lecture';
-  } catch {
-    return 'lecture';
-  }
-}
-
 /** Monoversion schedules: serial, CSS, VSS, recoverable, ACA, strict. */
 export function ClassicPage() {
   const [text, setText] = useState(DEFAULT_PRESET.schedule);
   const [preset, setPreset] = useState(DEFAULT_PRESET.id);
   const [hoverOps, setHoverOps] = useState<number[] | null>(null);
-  const [onlyAcyclic, setOnlyAcyclic] = useState(false);
-  const [showAll, setShowAll] = useState(false);
-  const [style, setStyle] = useState<ViewStyle>(savedStyle);
+  const [style, setStyle] = useViewStyle();
 
   const parsed = useMemo(() => parseSchedule(text), [text]);
   const schedule = parsed.schedule;
@@ -99,23 +49,11 @@ export function ClassicPage() {
     () => (schedule ? analyse(schedule, style) : null),
     [schedule, style],
   );
-  const look = STYLES[style];
-
-  function chooseStyle(next: ViewStyle) {
-    setStyle(next);
-    setShowAll(false);
-    try {
-      localStorage.setItem(STYLE_KEY, next);
-    } catch {
-      // Remembering the choice is a convenience; without storage it just resets.
-    }
-  }
   const highlight = useMemo(() => new Set(hoverOps ?? []), [hoverOps]);
 
   function load(next: string, id = '') {
     setText(next);
     setPreset(id);
-    setShowAll(false);
     setHoverOps(null);
   }
 
@@ -140,8 +78,6 @@ export function ClassicPage() {
   const recClass: RecoveryClass = !analysis
     ? 0
     : analysis.strict.holds ? 3 : analysis.aca.holds ? 2 : analysis.recoverable.holds ? 1 : 0;
-  const listed = vss ? vss.graphs.filter((g) => !onlyAcyclic || g.cycle === null) : [];
-  const shown = showAll ? listed : listed.slice(0, GRAPHS_SHOWN);
   const cssRules = analysis
     ? (['wr', 'rw', 'ww'] as EdgeRule[]).filter((r) => analysis.css.graph.edges.some((e) => e.rule === r))
     : [];
@@ -322,132 +258,15 @@ export function ClassicPage() {
               </div>
             </section>
 
-            <section className="panel">
-              <div className="panel-head">
-                <h2 className="section-head">View serializability — possible graphs</h2>
-                <div className="segmented" role="group" aria-label="Graph drawn as in">
-                  {(['lecture', 'notes'] as ViewStyle[]).map((s) => (
-                    <button
-                      key={s}
-                      className={s === style ? 'on' : ''}
-                      aria-pressed={s === style}
-                      title={STYLES[s].method}
-                      onClick={() => chooseStyle(s)}
-                    >
-                      {STYLES[s].label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {style === 'lecture' ? (
-                <dl className="rule-list">
-                  <dt>Nodes:</dt>
-                  <dd>
-                    Every transaction, plus T0, which wrote the initial values, and Tf, which
-                    reads every written object after the schedule ends.
-                  </dd>
-                  <dt>Edges:</dt>
-                  <dd>
-                    <ul className="flush">
-                      <li>If Ti reads X from Tj, add Tj → Ti, so each final writer gets an arc to Tf.</li>
-                      <li>
-                        If Ti reads X from Tj and Tk also writes X, add Tk → Tj <em>or</em> Ti → Tk.
-                        <ul>
-                          <li>If Tj is T0, only Ti → Tk.</li>
-                          <li>If Ti is Tf, only Tk → Tj.</li>
-                        </ul>
-                      </li>
-                    </ul>
-                  </dd>
-                </dl>
-              ) : (
-                <dl className="rule-list">
-                  <dt>Nodes:</dt>
-                  <dd>Every transaction, plus T0, which wrote the initial values.</dd>
-                  <dt>(a)</dt>
-                  <dd>If Tj reads O from Ti, add Ti → Tj.</dd>
-                  <dt>(b)</dt>
-                  <dd>If Ti makes the final write on O, add Tj → Ti for every other Tj updating O.</dd>
-                  <dt>(c)</dt>
-                  <dd>
-                    If Tj reads O from Tk and Ti updates O, add Ti → Tk <em>or</em> Tj → Ti.
-                    <ul>
-                      <li>If Tk is T0, Ti → T0 is impossible, so only Tj → Ti.</li>
-                    </ul>
-                  </dd>
-                </dl>
-              )}
-              <p className="note">
-                Both drawings give the same verdict and serial orders; only the extra node and the
-                rule labels differ.
-              </p>
-              <Legend rules={look.rules} labels={look.labels} />
-
-              <h3 className="sub-head">Edges in every graph</h3>
-              <EdgeRows edges={vss.base} onHover={setHoverOps} />
-
-              <h3 className="sub-head">
-                {style === 'lecture' ? 'Rule 3' : 'Rule (c)'} choices — {vss.open.length} open, {vss.choices.length - vss.open.length}{' '}
-                already satisfied
-              </h3>
-              {vss.choices.length === 0 ? (
-                <p className="panel-text">None: no third transaction updates an object that was read from another.</p>
-              ) : (
-                <ul className="edge-rows">
-                  {vss.choices.map((c) => (
-                    <ChoiceRow key={c.id} choice={c} onHover={setHoverOps} prefix={look.prefix} />
-                  ))}
-                </ul>
-              )}
-
-              <div className="grid-head">
-                <h3 className="sub-head">
-                  {vss.open.length === 0
-                    ? 'The graph'
-                    : `2^${vss.open.length} = ${vss.combinations} combinations → ${vss.graphs.length} distinct graph${vss.graphs.length === 1 ? '' : 's'}, ${vss.graphs.filter((g) => !g.cycle).length} acyclic`}
-                </h3>
-                {vss.graphs.length > 1 && (
-                  <label className="toggle">
-                    <input
-                      type="checkbox"
-                      checked={onlyAcyclic}
-                      onChange={(e) => setOnlyAcyclic(e.target.checked)}
-                    />
-                    only acyclic
-                  </label>
-                )}
-              </div>
-              {vss.truncated && (
-                <p className="note">
-                  Too many open choices to list them all: showing the first 2^10 combinations.
-                </p>
-              )}
-              <div className={`graph-grid ${vss.graphs.length === 1 ? 'single' : ''}`}>
-                {shown.map((g, i) => (
-                  <div key={i} className={`graph-card ${g.cycle ? 'cyclic' : 'acyclic'}`}>
-                    <GraphView
-                      nodes={vss.nodes}
-                      edges={g.graph.edges}
-                      cycle={g.cycle}
-                      onHover={setHoverOps}
-                      compact={vss.graphs.length > 1}
-                      labels={look.labels}
-                    />
-                    <p className="graph-picks">{picksText(g, vss.open, look.prefix)}</p>
-                    <p className={`graph-verdict ${g.cycle ? 'no' : 'yes'}`}>
-                      {g.cycle
-                        ? `✗ cycle ${g.cycle.map(txnName).join(' → ')}`
-                        : `✓ acyclic: ${orderText(g.order!)}`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              {listed.length > GRAPHS_SHOWN && (
-                <button className="ghost show-all" onClick={() => setShowAll((s) => !s)}>
-                  {showAll ? 'Show fewer' : `Show all ${listed.length}`}
-                </button>
-              )}
-            </section>
+            <ViewGraphPanel
+              key={`view-${text}`}
+              title="View serializability — possible graphs"
+              result={vss}
+              style={style}
+              onStyle={setStyle}
+              onHover={setHoverOps}
+              finalWrites
+            />
           </main>
         </div>
       )}

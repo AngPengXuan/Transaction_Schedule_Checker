@@ -1,0 +1,99 @@
+/* Schedule and database declarations side by side. */
+.dist-inputs {
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@media (max-width: 700px) {
+  .dist-inputs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --------------------------------------------------------- per database */
+
+.site-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.site-card {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem 0.7rem;
+  min-width: 0;
+}
+
+.site-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.site-name {
+  font-weight: 700;
+}
+
+.site-objects {
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.site-verdict {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.site-verdict.yes,
+.site-verdict .yes {
+  color: var(--focus-ok);
+}
+
+.site-verdict.no,
+.site-verdict .no {
+  color: var(--danger);
+}
+
+.site-card .schedule-grid {
+  margin-bottom: 0.4rem;
+}
+
+/* ---------------------------------------------------------- reads table */
+
+.reads-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.reads-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.reads-table td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.reads-table tr.differs td {
+  background: color-mix(in srgb, var(--focus-warn) 12%, transparent);
+}
+
+.reads-table tr:hover td {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.reads-table .muted {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}

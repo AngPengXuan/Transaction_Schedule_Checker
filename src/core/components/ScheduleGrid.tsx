@@ -1,15 +1,17 @@
-import type { Schedule } from '../schedule';
+import type { Op, Schedule } from '../schedule';
 import { opText, txnName } from '../schedule';
 
 interface Props {
   schedule: Schedule;
   highlight: Set<number>;
+  /** A short label after each operation, e.g. the database it runs at. */
+  tag?: (op: Op) => string | null;
 }
 
 const STATUS_NOTE = { committed: '', aborted: 'aborts', active: 'no commit' } as const;
 
 /** The textbook layout: time runs down, one column per transaction. */
-export function ScheduleGrid({ schedule, highlight }: Props) {
+export function ScheduleGrid({ schedule, highlight, tag }: Props) {
   return (
     <table className="schedule-grid">
       <thead>
@@ -32,6 +34,7 @@ export function ScheduleGrid({ schedule, highlight }: Props) {
             {schedule.txns.map((t) => (
               <td key={t} className={t === op.txn ? `op op-${op.kind}` : ''}>
                 {t === op.txn ? opText(op) : ''}
+                {t === op.txn && tag?.(op) && <span className="op-tag-site">{tag(op)}</span>}
               </td>
             ))}
           </tr>

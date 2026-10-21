@@ -1,0 +1,89 @@
+/* The page's two halves, locking and multiple versions. */
+.part-head {
+  margin: 0.5rem 0 -0.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.part-head:first-child {
+  margin-top: 0;
+}
+
+/* ----------------------------------------------------------- lock plan */
+
+.lock-plan tr.lock-row td {
+  height: 1.15rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.lock-plan tr.lock-row.unlock td {
+  color: var(--danger);
+}
+
+.lock-plan tr.lock-row.lock-point td {
+  color: var(--accent);
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------- replay */
+
+.replay-outcome {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.replay-outcome .muted {
+  color: var(--text-muted);
+}
+
+.replay-log {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.replay-log th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.replay-log td {
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.replay-log td.step {
+  width: 3rem;
+  color: var(--text-muted);
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+}
+
+.replay-log tr.ev-grant td,
+.replay-log tr.ev-skip td {
+  color: var(--text-muted);
+}
+
+.replay-log tr.ev-wait td,
+.replay-log tr.ev-queue td,
+.replay-log tr.ev-stuck td {
+  color: var(--focus-warn);
+}
+
+.replay-log tr.ev-deadlock td,
+.replay-log tr.ev-abort td {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.replay-log tr.ev-commit td {
+  color: var(--focus-ok);
+}
+
+.replay-log tr:hover td {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
