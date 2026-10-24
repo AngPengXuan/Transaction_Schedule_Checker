@@ -7,6 +7,7 @@ import type { EdgeRule } from '../../core/graph';
 import { opText, parseSchedule } from '../../core/schedule';
 import { analyseDistributed, parseSites, versionText } from './analysis';
 import { DIST_DEFAULT, DIST_PRESETS } from './presets';
+import { ReplicatedView } from './ReplicatedView';
 import './DistributedPage.css';
 
 const OBJECTS = ['A', 'B', 'C', 'D'];
@@ -36,8 +37,34 @@ function rulesIn(edges: { rule: EdgeRule }[]): EdgeRule[] {
   return (['wr', 'rw', 'ww'] as EdgeRule[]).filter((r) => edges.some((e) => e.rule === r));
 }
 
-/** Several databases, each holding some of the objects: local vs global serializability. */
+type Mode = 'replicated' | 'partitioned';
+
+const MODES: { id: Mode; label: string; title: string }[] = [
+  { id: 'replicated', label: 'Replicated: local schedules', title: 'One schedule per site; an object may have copies at several sites' },
+  { id: 'partitioned', label: 'Partitioned: one global schedule', title: 'One interleaved schedule; each object lives at exactly one database' },
+];
+
+/** Several databases: replicated copies (one schedule per site), or partitioned data (one global schedule). */
 export function DistributedPage() {
+  const [mode, setMode] = useState<Mode>('replicated');
+  return (
+    <>
+      <div className="mode-switch">
+        <div className="segmented" role="group" aria-label="Kind of distribution">
+          {MODES.map((m) => (
+            <button key={m.id} className={m.id === mode ? 'on' : ''} aria-pressed={m.id === mode} title={m.title} onClick={() => setMode(m.id)}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {mode === 'replicated' ? <ReplicatedView /> : <PartitionedView />}
+    </>
+  );
+}
+
+/** One global schedule over objects split across databases: local vs global serializability. */
+function PartitionedView() {
   const [text, setText] = useState(DIST_DEFAULT.schedule);
   const [sitesText, setSitesText] = useState(DIST_DEFAULT.sites);
   const [preset, setPreset] = useState(DIST_DEFAULT.id);

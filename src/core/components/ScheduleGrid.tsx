@@ -6,12 +6,14 @@ interface Props {
   highlight: Set<number>;
   /** A short label after each operation, e.g. the database it runs at. */
   tag?: (op: Op) => string | null;
+  /** The step number shown for an operation; defaults to its position in the schedule. */
+  stepOf?: (op: Op) => number;
 }
 
 const STATUS_NOTE = { committed: '', aborted: 'aborts', active: 'no commit' } as const;
 
 /** The textbook layout: time runs down, one column per transaction. */
-export function ScheduleGrid({ schedule, highlight, tag }: Props) {
+export function ScheduleGrid({ schedule, highlight, tag, stepOf }: Props) {
   return (
     <table className="schedule-grid">
       <thead>
@@ -30,7 +32,7 @@ export function ScheduleGrid({ schedule, highlight, tag }: Props) {
       <tbody>
         {schedule.ops.map((op) => (
           <tr key={op.index} className={highlight.has(op.index) ? 'lit' : ''}>
-            <td className="step">{op.index + 1}</td>
+            <td className="step">{stepOf ? stepOf(op) : op.index + 1}</td>
             {schedule.txns.map((t) => (
               <td key={t} className={t === op.txn ? `op op-${op.kind}` : ''}>
                 {t === op.txn ? opText(op) : ''}

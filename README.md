@@ -11,7 +11,7 @@ There are three pages, one tab each:
 |---|---|---|
 | **Classic** (`#/`) | CS3223 | Serial, CSS, VSS, recoverable, ACA, strict |
 | **Concurrency control** (`#/cc`; `#/mvcc` still works) | CS3223 | Locking: 2PL, strict 2PL, deadlock handling. Multiple versions: MVSS, snapshot isolation, serializable SI |
-| **Multi-database** (`#/distributed`) | CS4224 | Local vs global serializability, strict 2PL, per-database snapshots |
+| **Multi-database** (`#/distributed`) | CS4224 | Replicated data: one-copy serializability (RDSG), ROWA, mutual consistency. Partitioned data: local vs global serializability, strict 2PL, per-database snapshots |
 
 The Classic page's properties:
 
@@ -166,6 +166,41 @@ the course defines them differently:
   order to abort less often.
 
 ## Multi-database page
+
+A toggle switches between two kinds of distribution.
+
+### Replicated: local schedules (default)
+
+Enter one local schedule per site, one per line: `S1: R1(X) W2(X) C1 C2`. A
+site holds a copy of every object its schedule mentions, and a transaction is
+the same transaction at every site. It counts as committed only if it commits
+at every site it ran at.
+
+| Check | Rule |
+|---|---|
+| Acyclic RDSG | Some choice of write order makes the replicated data serialization graph acyclic |
+| One-copy serializable (1SR) | Equivalent to a serial execution on a single copy of each object: every read sees the same transaction's value, and every written copy ends with the serial order's last writer. Checked by trying every serial order. |
+| Each site serializable | Every local schedule is conflict serializable on its own |
+| Union graph acyclic | The union of the local precedence graphs has no cycle |
+| Read one, write all (ROWA) | Every write reaches every copy of its object |
+| Mutual consistency | Every copy of each object ends with the same final write |
+| Atomic commit | Each transaction commits at every site it ran at, or aborts at all of them |
+
+**The RDSG** (Bernstein, Hadzilacos & Goodman) is built in three parts:
+
+1. The union of the local graphs.
+2. A chosen **write order** on each object's writers.
+3. **Read-order** edges: if Tj reads X from Ti, and Tk writes X after Ti in the
+   write order, add Tj → Tk.
+
+A virtual Tf reads every copy's final value, as in the AY26/27 Sem 1
+polygraph. So each copy's last writer must come last in the write order, and
+copies left with different values rule the RDSG out. The app tries every
+combination of write orders and shows the first acyclic one. An acyclic RDSG
+proves 1SR. The converse doesn't hold, which is why 1SR is also checked
+directly. With ROWA, an acyclic union graph is already enough.
+
+### Partitioned: one global schedule
 
 Declare which database holds which objects, one per line: `DB1: A, B`. Every
 object goes in exactly one database. Each database sees only its share of the

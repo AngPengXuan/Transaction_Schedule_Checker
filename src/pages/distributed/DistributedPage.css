@@ -97,3 +97,45 @@
   color: var(--text-muted);
   font-size: 0.75rem;
 }
+
+/* ------------------------------------------------------------- modes */
+
+.mode-switch {
+  margin: 0.9rem 0 0;
+}
+
+.copy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.copy-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0.15rem 0.3rem;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.copy-table td {
+  padding: 0.15rem 0.3rem;
+  border-bottom: 1px dashed var(--border);
+  vertical-align: top;
+}
+
+.copy-table td.obj {
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-weight: 700;
+}
+
+.copy-table .diverges {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.write-order {
+  margin: 0 0 0.6rem;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
